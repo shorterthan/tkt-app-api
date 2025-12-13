@@ -9,6 +9,7 @@ const { Pool } = pkg;
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is missing. Put it in .env");
