@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>友達掲示板</title>
+</head>
+<body>
+  <h1>友達掲示板</h1>
+
+  <input id="name" placeholder="名前"><br><br>
+  <textarea id="content" placeholder="メッセージ"></textarea><br><br>
+  <button onclick="send()">送信</button>
+
+  <ul id="list"></ul>
+
+  <script>
+    const API = "http://localhost:3000";
+
+    async function load() {
+      const res = await fetch(API + "/api/messages");
+      const data = await res.json();
+      document.getElementById("list").innerHTML =
+        data.map(m => `<li><b>${m.name}</b>: ${m.content}</li>`).join("");
+    }
+
+    async function send() {
+      const name = document.getElementById("name").value;
+      const content = document.getElementById("content").value;
+
+      await fetch(API + "/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, content })
+      });
+
+      document.getElementById("content").value = "";
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>
