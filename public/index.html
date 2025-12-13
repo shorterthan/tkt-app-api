@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>tkt-app</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      max-width: 640px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #111;
+      color: #fff;
+    }
+
+    button.ghost {
+      background: #eee;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+
+    li {
+      border-top: 1px solid #eee;
+      padding: 10px 0;
+    }
+
+    .meta {
+      color: #666;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .error {
+      color: #b00020;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>tkt-app（メッセージ）</h1>
+
+  <div class="card">
+    <div class="row">
+      <input id="name" placeholder="名前（40文字まで）" maxlength="40" />
+    </div>
+    <div class="row">
+      <textarea id="content" placeholder="内容（200文字まで）" maxlength="200"></textarea>
+    </div>
+    <div class="row">
+      <button class="primary" id="send">送信</button>
+      <button class="ghost" id="reload">更新</button>
+    </div>
+    <div class="error" id="error"></div>
+
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+    // ★ここだけ自分のAPI URLに合わせる
+    const API_BASE = "https://tkt-app-api.onrender.com";
+
+    const $ = (id) => document.getElementById(id);
+    const errorEl = $("error");
+    const listEl = $("list");
+
+    function showError(msg) {
+      errorEl.textContent = msg || "";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function loadMessages() {
+      showError("");
+      listEl.innerHTML = "読み込み中…";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/messages`);
+        if (!res.ok) throw new Error(`GET failed: ${res.status}`);
+        const data = await res.json();
+
+        if (!Array.isArray(data)) throw new Error("Unexpected response");
+
+        listEl.innerHTML = data.map(m => `
+          <li>
+            <div><b>${escapeHtml(m.name)}</b>: ${escapeHtml(m.content)}</div>
+            <div class="meta">${escapeHtml(m.created_at)}</div>
+          </li>
+        `).join("");
+
+        if (data.length === 0) listEl.innerHTML = "<li>まだ投稿がありません</li>";
+      } catch (e) {
+        console.error(e);
+        listEl.innerHTML = "";
+        showError("読み込みに失敗しました（API URLやCORSを確認）");
+      }
+    }
+
+    async function sendMessage() {
+      showError("");
+
+      const name = $("name").value.trim();
+      const content = $("content").value.trim();
+
+      if (!name || !content) {
+        showError("名前と内容を入力してね");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, content })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `POST failed: ${res.status}`);
+        }
+
+        $("content").value = "";
+        await loadMessages();
+      } catch (e) {
+        console.error(e);
+        showError("送信に失敗しました（APIが動いてるか確認）");
+      }
+    }
+
+    $("send").addEventListener("click", sendMessage);
+    $("reload").addEventListener("click", loadMessages);
+
+    loadMessages();
+  </script>
+</body>
+
+</html>
