@@ -2,40 +2,283 @@
 <html lang="ja">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>tkt-app</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>PlanBoard | タスク</title>
 
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/task.css" />
 </head>
 
 <body>
-  <header class="header">
-    <h1>tkt-app</h1>
-    <p>シンプルなメッセージボード</p>
-  </header>
+  <planboard-common active="tasks"></planboard-common>
 
-  <main class="container">
-    <section class="card">
-      <input id="name" placeholder="名前（40文字まで）" />
-      <textarea id="content" placeholder="内容（200文字まで）"></textarea>
-
-      <div class="actions">
-        <button id="sendBtn" class="primary">送信</button>
-        <button id="reloadBtn">更新</button>
+  <main class="wrap">
+    <!-- ================================
+      TODAY (上)
+    ================================= -->
+    <section class="card card--glass">
+      <div class="card__head">
+        <h2 class="card__title">今日のタスク</h2>
+        <div class="card__tools"></div>
       </div>
 
-      <p id="error" class="error"></p>
+      <div class="split">
+        <!-- 朔冶 -->
+        <div class="subpanel">
+          <div class="subpanel__head">
+            <span class="badge badge--saku">朔冶</span>
+            <span class="muted">0件</span>
+          </div>
+          <!-- JSがここに描画 -->
+          <ul class="todo"></ul>
+        </div>
+
+        <!-- 翔太 -->
+        <div class="subpanel">
+          <div class="subpanel__head">
+            <span class="badge badge--shota">翔太</span>
+            <span class="muted">0件</span>
+          </div>
+          <!-- JSがここに描画 -->
+          <ul class="todo"></ul>
+        </div>
+      </div>
     </section>
 
-    <section id="list" class="list"></section>
+    <!-- ================================
+      TASK LIST (下)
+    ================================= -->
+    <section class="panel">
+      <!-- ✅ 上バー（ここに全部置く） -->
+      <div class="taskBar">
+        <div class="taskBar__left">
+          <h2 class="panel__title">タスクリスト</h2>
+
+          <div class="viewToggle" role="tablist" aria-label="views">
+            <input class="viewToggle__radio" type="radio" name="view" id="view-list" checked />
+            <label class="viewToggle__tab" for="view-list">リスト</label>
+
+            <input class="viewToggle__radio" type="radio" name="view" id="view-cal" />
+            <label class="viewToggle__tab" for="view-cal">カレンダー</label>
+
+            <span class="viewToggle__pill" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="taskBar__right">
+          <select class="select select--small" aria-label="genre filter"></select>
+
+          <select class="select select--small" aria-label="assignee filter">
+            <option value="">担当</option>
+            <option value="朔冶">朔冶</option>
+            <option value="翔太">翔太</option>
+          </select>
+
+          <a class="btn" href="#add-modal">＋ 予定追加</a>
+        </div>
+      </div>
+
+      <!-- ✅ コンテンツ（リスト/カレンダー） -->
+      <div class="views">
+        <!-- ===== LIST VIEW ===== -->
+        <section class="view view--list" aria-label="list view">
+          <div class="table__body"></div>
+        </section>
+
+        <!-- ===== CALENDAR VIEW ===== -->
+        <section class="view view--cal" aria-label="calendar view">
+          <div class="cal">
+            <div class="cal__head">
+              <div class="cal__title">
+                <span class="cal__month"></span>
+                <span class="pill pill--soft">month view</span>
+              </div>
+
+              <div class="cal__nav">
+                <button class="btn btn--ghost" type="button" aria-label="previous month">◀</button>
+                <button class="btn btn--ghost" type="button">Today</button>
+                <button class="btn btn--ghost" type="button" aria-label="next month">▶</button>
+              </div>
+            </div>
+
+            <div class="cal__dow">
+              <div class="dow">Mon</div>
+              <div class="dow">Tue</div>
+              <div class="dow">Wed</div>
+              <div class="dow">Thu</div>
+              <div class="dow">Fri</div>
+              <div class="dow">Sat</div>
+              <div class="dow">Sun</div>
+            </div>
+
+            <div class="cal__grid"></div>
+
+            <div class="cal__foot">
+              <div class="legend">
+                <span class="lg"><i class="lg__dot lg__dot--cyan"></i> IT</span>
+                <span class="lg"><i class="lg__dot lg__dot--violet"></i> 仕事</span>
+                <span class="lg"><i class="lg__dot lg__dot--amber"></i> 英語</span>
+                <span class="lg"><i class="lg__dot lg__dot--mint"></i> AI</span>
+              </div>
+              <div class="hint">※ 予定クリック → 編集（#edit-modal）</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
   </main>
 
-  <footer class="footer">
-    © 2025 tkt-app
-  </footer>
+  <!-- ===== Add Modal (CSS :target) ===== -->
+  <section id="add-modal" class="modal" aria-label="add task modal" role="dialog" aria-modal="true">
+    <a class="modal__backdrop" href="#" aria-label="close"></a>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <div class="modal__title">予定を追加</div>
+        <a class="modal__close" href="#" aria-label="close">×</a>
+      </div>
 
-  <script src="/javascript/app.js" defer></script>
+      <div class="form">
+        <div class="row">
+          <label class="label">タイトル</label>
+          <input class="input" />
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <label class="label">ジャンル</label>
+            <select class="select">
+              <option>仕事</option>
+              <option>IT</option>
+              <option>AI</option>
+              <option>英語</option>
+              <option>その他</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label class="label">担当</label>
+            <select class="select">
+              <option>全員</option>
+              <option>朔冶</option>
+              <option>翔太</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <label class="label">開始日</label>
+            <input class="input" type="date" />
+          </div>
+          <div class="row">
+            <label class="label">終了日</label>
+            <input class="input" type="date" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">メモ</label>
+          <textarea class="textarea" rows="6"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button">保存</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Edit Modal (CSS :target) ===== -->
+  <section id="edit-modal" class="modal" aria-label="edit task modal" role="dialog" aria-modal="true">
+    <a class="modal__backdrop" href="#" aria-label="close"></a>
+    <div class="modal__panel">
+      <div class="modal__head">
+        <div class="modal__title">予定を編集</div>
+        <a class="modal__close" href="#" aria-label="close">×</a>
+      </div>
+
+      <div class="form">
+        <div class="row">
+          <label class="label">タイトル</label>
+          <input class="input" />
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <label class="label">ジャンル</label>
+            <select class="select">
+              <option>仕事</option>
+              <option>IT</option>
+              <option>AI</option>
+              <option>英語</option>
+              <option>その他</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label class="label">担当</label>
+            <select class="select">
+              <option>全員</option>
+              <option>朔冶</option>
+              <option>翔太</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <label class="label">開始日</label>
+            <input class="input" type="date" />
+          </div>
+          <div class="row">
+            <label class="label">終了日</label>
+            <input class="input" type="date" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="label">メモ</label>
+          <textarea class="textarea" rows="6"></textarea>
+        </div>
+
+        <div class="actions">
+          <div class="actions__right">
+            <button class="btn btn--danger" type="button">削除</button>
+            <button class="btn" type="button">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Genre Modal (CSS :target) ===== -->
+  <section id="genre-modal" class="modal" aria-label="genre modal" role="dialog" aria-modal="true">
+    <a class="modal__backdrop" href="#" aria-label="close"></a>
+
+    <div class="modal__panel">
+      <div class="modal__head">
+        <div>
+          <div class="modal__title">ジャンルを編集</div>
+        </div>
+        <a class="btn btn--ghost" href="#">閉じる</a>
+      </div>
+
+      <div class="form">
+        <div class="genreList" id="genre-list"></div>
+
+        <div class="genreAdd">
+          <input class="input" id="genre-new-name" placeholder="新しいジャンル名" />
+          <input class="input genreColor" id="genre-new-color" type="color" value="#3ddcff" />
+          <button class="btn" type="button" id="genre-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/common.js"></script>
+  <script src="js/task.js"></script>
 </body>
 
 </html>
